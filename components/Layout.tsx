@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { PatientProfile, Theme } from '../types';
+import { PatientProfile, Theme, AppSettings } from '../types';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -18,6 +18,7 @@ interface LayoutProps {
   profile: PatientProfile | null;
   unreadCount?: number;
   onLogout: () => void;
+  settings: AppSettings;
 }
 
 export const Layout: React.FC<LayoutProps> = ({ 
@@ -35,7 +36,8 @@ export const Layout: React.FC<LayoutProps> = ({
   theme,
   profile,
   unreadCount = 0,
-  onLogout
+  onLogout,
+  settings
 }) => {
   const closeAll = () => {
     setAdmin(false);
@@ -56,7 +58,9 @@ export const Layout: React.FC<LayoutProps> = ({
                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.505 4.04 3 5.5L12 21l7-7Z"/></svg>
               </div>
               <div className="hidden sm:block">
-                <h1 className="text-lg font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-600">MediConsult <span className="text-blue-600">AI</span></h1>
+                <h1 className="text-lg font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-600">
+                  {settings.prescriptionTitle.split(' ')[0]} <span className="text-blue-600">{settings.prescriptionTitle.split(' ').slice(1).join(' ')}</span>
+                </h1>
               </div>
             </div>
 
@@ -93,7 +97,7 @@ export const Layout: React.FC<LayoutProps> = ({
         {children}
       </main>
       <footer className="py-10 text-center text-slate-400 text-xs font-medium">
-        <p>Built with AI Intelligence • © 2024 MediConsult Systems</p>
+        <p>Built for Smart Healthcare • © 2026 {settings.prescriptionTitle} Systems</p>
       </footer>
     </div>
   );

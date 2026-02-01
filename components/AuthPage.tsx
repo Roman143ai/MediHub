@@ -35,6 +35,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLogin }) => {
 
       const newUser: User = { name, userId, password };
       localStorage.setItem('mediConsult_users', JSON.stringify([...users, newUser]));
+      window.dispatchEvent(new Event('storage')); // Real-time sync for newly created users
       alert('রেজিস্ট্রেশন সফল হয়েছে! এখন লগইন করুন।');
       setMode('login');
     } else if (mode === 'admin') {
@@ -104,7 +105,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLogin }) => {
                   value={name} 
                   onChange={e => setName(e.target.value)}
                   className="w-full px-6 py-4 rounded-2xl bg-slate-50 border-2 border-transparent focus:border-blue-500 focus:bg-white outline-none font-bold text-slate-800 transition-all shadow-inner"
-                  placeholder="উদা: আব্দুল্লাহ আল মামুন"
+                  placeholder="উদা: রিমন মাহমুদ"
                 />
               </div>
             )}

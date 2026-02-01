@@ -1,12 +1,13 @@
 
 import React from 'react';
-import { PatientProfile } from '../types';
+import { PatientProfile, AppSettings } from '../types';
 
 interface WelcomeBannerProps {
   profile: PatientProfile | null;
+  settings: AppSettings;
 }
 
-export const WelcomeBanner: React.FC<WelcomeBannerProps> = ({ profile }) => {
+export const WelcomeBanner: React.FC<WelcomeBannerProps> = ({ profile, settings }) => {
   if (!profile || !profile.name) return null;
 
   return (
@@ -32,13 +33,12 @@ export const WelcomeBanner: React.FC<WelcomeBannerProps> = ({ profile }) => {
         </div>
         
         <div className="space-y-1">
-          <p className="text-xs font-black text-blue-600 uppercase tracking-[0.2em]">স্বাগতম!</p>
+          <p className="text-xs font-black text-blue-600 uppercase tracking-[0.2em]">{settings.homeWelcomeTitle || 'স্বাগতম!'}</p>
           <h2 className="text-2xl md:text-3xl font-black text-slate-800 tracking-tight">
             {profile.name}
           </h2>
           <div className="flex items-center gap-3">
-            <span className="px-2.5 py-0.5 bg-slate-100 rounded-lg text-[10px] font-black text-slate-500 uppercase">রক্তের গ্রুপ: {profile.bloodGroup || 'অজানা'}</span>
-            <span className="px-2.5 py-0.5 bg-blue-50 rounded-lg text-[10px] font-black text-blue-600 uppercase">আইডি: {profile.id.substring(0,6)}</span>
+            <span className="px-2.5 py-0.5 bg-slate-100 rounded-lg text-[10px] font-black text-slate-500 uppercase">{settings.homeWelcomeSubtitle || 'আপনার সুস্বাস্থ্য আমাদের লক্ষ্য।'}</span>
           </div>
         </div>
       </div>

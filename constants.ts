@@ -16,6 +16,10 @@ export const THEMES: Theme[] = [
 
 export const INITIAL_SETTINGS: AppSettings = {
   activeThemeId: 'blue',
+  prescriptionTitle: 'MediConsult AI',
+  prescriptionSubtitle: 'Digital Health Assistant • Bangladesh',
+  homeWelcomeTitle: 'স্বাগতম!',
+  homeWelcomeSubtitle: 'আপনার সুস্বাস্থ্য আমাদের একমাত্র লক্ষ্য।',
   symptoms: [
     "জ্বর (Fever)", "কাশি (Cough)", "মাথাব্যথা (Headache)", "পেটে ব্যথা (Stomach Pain)",
     "শ্বাসকষ্ট (Shortness of Breath)", "দূর্বলতা (Weakness)", "বমি বমি ভাব (Nausea)",

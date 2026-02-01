@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Layout } from './components/Layout';
 import { AdminPanel } from './components/AdminPanel';
 import { PatientForm } from './components/PatientForm';
@@ -36,37 +36,46 @@ const App: React.FC = () => {
   const [lastViewedOrdersCount, setLastViewedOrdersCount] = useState(0);
   const [prefilledMedicine, setPrefilledMedicine] = useState<string | null>(null);
 
-  // Persistence
-  useEffect(() => {
-    const savedUser = localStorage.getItem('mediConsult_currentUser');
-    if (savedUser) {
-      const user = JSON.parse(savedUser);
+  // Sync function to load all data from storage
+  const syncData = useCallback(() => {
+    const safeParse = (key: string, fallback: any) => {
+      try {
+        const item = localStorage.getItem(key);
+        return item ? JSON.parse(item) : fallback;
+      } catch (e) {
+        return fallback;
+      }
+    };
+
+    setSettings(safeParse('mediConsult_settings', INITIAL_SETTINGS));
+    setPriceList(safeParse('mediConsult_priceList', []));
+    setOrders(safeParse('mediConsult_orders', []));
+    
+    // Also sync the current user if they are logged in to catch admin credential changes
+    const user = safeParse('mediConsult_currentUser', null);
+    if (user) {
       setCurrentUser(user);
       setIsAdmin(!!user.isAdmin);
     }
-
-    const savedSettings = localStorage.getItem('mediConsult_settings');
-    if (savedSettings) setSettings(JSON.parse(savedSettings));
-    
-    const savedProfile = localStorage.getItem('mediConsult_profile');
-    if (savedProfile) setActiveProfile(JSON.parse(savedProfile));
-    
-    const savedOrders = localStorage.getItem('mediConsult_orders');
-    if (savedOrders) setOrders(JSON.parse(savedOrders));
-    
-    const savedPriceList = localStorage.getItem('mediConsult_priceList');
-    if (savedPriceList) setPriceList(JSON.parse(savedPriceList));
-
-    const savedHistory = localStorage.getItem('mediConsult_history');
-    if (savedHistory) setPrescriptionHistory(JSON.parse(savedHistory));
-
-    const savedLastCount = localStorage.getItem('mediConsult_lastCount');
-    if (savedLastCount) setLastViewedOrdersCount(parseInt(savedLastCount));
   }, []);
+
+  // Initial load and Real-time Sync across tabs
+  useEffect(() => {
+    syncData();
+    
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key?.startsWith('mediConsult_')) {
+        syncData();
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, [syncData]);
 
   useEffect(() => {
     if (isOrderView) {
-      const count = orders.filter(o => o.patientId === activeProfile?.id).reduce((acc, o) => acc + o.messages.length, 0);
+      const count = orders.filter(o => o.patientId === activeProfile?.id).reduce((acc, o) => acc + (o.messages?.length || 0), 0);
       setLastViewedOrdersCount(count);
       localStorage.setItem('mediConsult_lastCount', count.toString());
     } else {
@@ -79,7 +88,6 @@ const App: React.FC = () => {
     setIsAdmin(!!user.isAdmin);
     localStorage.setItem('mediConsult_currentUser', JSON.stringify(user));
     
-    // Auto-create or find profile for regular users
     if (!user.isAdmin) {
       const savedProfile = localStorage.getItem(`mediConsult_profile_${user.userId}`);
       if (savedProfile) {
@@ -123,6 +131,8 @@ const App: React.FC = () => {
   const handleSettingsUpdate = (newSettings: AppSettings) => {
     setSettings(newSettings);
     localStorage.setItem('mediConsult_settings', JSON.stringify(newSettings));
+    // Dispatch local storage event for current tab as well
+    window.dispatchEvent(new Event('storage'));
   };
 
   const handleProfileUpdate = (profile: PatientProfile) => {
@@ -141,6 +151,7 @@ const App: React.FC = () => {
   const handleUpdatePriceList = (newList: PriceListItem[]) => {
     setPriceList(newList);
     localStorage.setItem('mediConsult_priceList', JSON.stringify(newList));
+    window.dispatchEvent(new Event('storage'));
   };
 
   const handlePlaceOrder = (orderData: Omit<MedicineOrder, 'id' | 'createdAt' | 'messages' | 'status'>) => {
@@ -159,7 +170,7 @@ const App: React.FC = () => {
       if (o.id === orderId) {
         return {
           ...o,
-          messages: [...o.messages, { sender: 'user' as const, text, timestamp: Date.now() }]
+          messages: [...(o.messages || []), { sender: 'user' as const, text, timestamp: Date.now() }]
         };
       }
       return o;
@@ -182,7 +193,6 @@ const App: React.FC = () => {
       const result = await generatePrescription(profile, medicalCase);
       setActivePrescription(result);
       
-      // Save to history with a limit of 5 entries
       const newEntry: PrescriptionEntry = {
         id: Math.random().toString(36).substr(2, 9),
         patientId: profile.id,
@@ -190,10 +200,7 @@ const App: React.FC = () => {
         timestamp: Date.now()
       };
       
-      // We slice to the last 4 and add the new one to ensure total is max 5
-      // This automatically removes the oldest one
       const newHistory = [...prescriptionHistory, newEntry].slice(-5);
-      
       setPrescriptionHistory(newHistory);
       localStorage.setItem('mediConsult_history', JSON.stringify(newHistory));
 
@@ -238,8 +245,8 @@ const App: React.FC = () => {
     document.documentElement.style.setProperty('--secondary-color', currentTheme.secondary);
   }, [currentTheme]);
 
-  const currentOrdersCount = orders.filter(o => o.patientId === activeProfile?.id).reduce((acc, o) => acc + o.messages.length, 0);
-  const unreadCount = currentOrdersCount - lastViewedOrdersCount;
+  const currentOrdersMessagesCount = orders.filter(o => o.patientId === activeProfile?.id).reduce((acc, o) => acc + (o.messages?.length || 0), 0);
+  const unreadCount = currentOrdersMessagesCount - lastViewedOrdersCount;
   const userHistory = prescriptionHistory.filter(h => h.patientId === activeProfile?.id);
 
   if (!currentUser) {
@@ -264,8 +271,9 @@ const App: React.FC = () => {
       profile={activeProfile}
       unreadCount={unreadCount > 0 ? unreadCount : 0}
       onLogout={handleLogout}
+      settings={settings}
     >
-      {isHomeView && settings.banners.homeHeader && (
+      {isHomeView && settings.banners?.homeHeader && (
         <div className="w-full mb-8 rounded-[2rem] overflow-hidden shadow-xl animate-in fade-in slide-in-from-top-4 duration-1000">
           <img src={settings.banners.homeHeader} className="w-full object-cover" alt="Home Header" />
         </div>
@@ -304,7 +312,7 @@ const App: React.FC = () => {
         <div className="space-y-4 max-w-4xl mx-auto">
           {!activePrescription && (
             <>
-              {activeProfile && <WelcomeBanner profile={activeProfile} />}
+              {activeProfile && <WelcomeBanner profile={activeProfile} settings={settings} />}
               <HomeDashboard 
                 onOpenPriceList={() => setIsPriceListView(true)}
                 onOpenOrder={() => setIsOrderView(true)}
@@ -347,7 +355,7 @@ const App: React.FC = () => {
         </div>
       )}
 
-      {isHomeView && settings.banners.homeFooter && (
+      {isHomeView && settings.banners?.homeFooter && (
         <div className="w-full mt-12 mb-4 rounded-[2rem] overflow-hidden shadow-xl animate-in fade-in slide-in-from-bottom-4 duration-1000">
           <img src={settings.banners.homeFooter} className="w-full object-cover" alt="Home Footer" />
         </div>

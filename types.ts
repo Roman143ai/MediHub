@@ -28,6 +28,10 @@ export interface AppSettings {
   availableTests: string[];
   activeThemeId: string;
   banners: AppBanners;
+  prescriptionTitle: string;
+  prescriptionSubtitle: string;
+  homeWelcomeTitle: string; // New field
+  homeWelcomeSubtitle: string; // New field
 }
 
 export interface PatientProfile {
