@@ -265,7 +265,8 @@ export const PatientForm: React.FC<PatientFormProps> = ({
             </div>
             <div className="space-y-2">
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4">উচ্চতা</label>
-              <input className="w-full px-6 py-4 rounded-2xl bg-slate-50 border-2 border-transparent focus:border-blue-500 focus:bg-white outline-none font-bold text-slate-800 transition-all" value={medicalCase.vitals.height} onChange={e => setMedicalCase({...medicalCase, vitals: {...medicalCase.vitals, height: e.target.value}})} placeholder="5'8\"" />
+              {/* Fix: Using curly braces to safely escape the placeholder string and avoid build errors */}
+              <input className="w-full px-6 py-4 rounded-2xl bg-slate-50 border-2 border-transparent focus:border-blue-500 focus:bg-white outline-none font-bold text-slate-800 transition-all" value={medicalCase.vitals.height} onChange={e => setMedicalCase({...medicalCase, vitals: {...medicalCase.vitals, height: e.target.value}})} placeholder={"5'8\""} />
             </div>
             <div className="space-y-2">
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4">রক্তচাপ (BP)</label>
@@ -395,7 +396,6 @@ export const PatientForm: React.FC<PatientFormProps> = ({
                         </div>
                       ) : (
                         <label className="flex-1 px-4 py-2 rounded-xl bg-slate-100 text-[10px] font-black text-slate-500 cursor-pointer hover:bg-slate-200 transition-all flex items-center justify-center gap-2">
-                          {/* Fix: Close the svg tag properly and ensure the hierarchy is correct. */}
                           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
                             <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
                             <circle cx="12" cy="13" r="4"/>
