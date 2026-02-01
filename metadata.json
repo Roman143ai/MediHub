@@ -1,0 +1,7 @@
+{
+  "name": "MediHub",
+  "description": "A comprehensive healthcare platform allowing patients to record medical history, symptoms, and test results to receive AI-powered diagnostic suggestions and downloadable prescriptions.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
