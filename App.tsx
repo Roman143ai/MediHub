@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Layout } from './components/Layout';
 import { AdminPanel } from './components/AdminPanel';
 import { PatientForm } from './components/PatientForm';
@@ -36,6 +36,9 @@ const App: React.FC = () => {
   const [lastViewedOrdersCount, setLastViewedOrdersCount] = useState(0);
   const [prefilledMedicine, setPrefilledMedicine] = useState<string | null>(null);
 
+  // Ref to track if navigation change is from back button
+  const isPopStateRef = useRef(false);
+
   // Sync function to load all data from storage
   const syncData = useCallback(() => {
     const safeParse = (key: string, fallback: any) => {
@@ -51,7 +54,6 @@ const App: React.FC = () => {
     setPriceList(safeParse('mediConsult_priceList', []));
     setOrders(safeParse('mediConsult_orders', []));
     
-    // Also sync the current user if they are logged in to catch admin credential changes
     const user = safeParse('mediConsult_currentUser', null);
     if (user) {
       setCurrentUser(user);
@@ -59,16 +61,35 @@ const App: React.FC = () => {
     }
   }, []);
 
-  // Initial load and Real-time Sync across tabs
+  // Back button (History) management
+  useEffect(() => {
+    const handlePopState = () => {
+      isPopStateRef.current = true;
+      resetNavigation();
+      setActivePrescription(null);
+      setTimeout(() => { isPopStateRef.current = false; }, 100);
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  // Logic to push state whenever a view opens
+  const navigateTo = (viewSetter: (val: boolean) => void) => {
+    resetNavigation();
+    viewSetter(true);
+    if (!isPopStateRef.current) {
+      window.history.pushState({ view: 'subpage' }, '');
+    }
+  };
+
   useEffect(() => {
     syncData();
-    
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key?.startsWith('mediConsult_')) {
         syncData();
       }
     };
-
     window.addEventListener('storage', handleStorageChange);
     return () => window.removeEventListener('storage', handleStorageChange);
   }, [syncData]);
@@ -131,7 +152,6 @@ const App: React.FC = () => {
   const handleSettingsUpdate = (newSettings: AppSettings) => {
     setSettings(newSettings);
     localStorage.setItem('mediConsult_settings', JSON.stringify(newSettings));
-    // Dispatch local storage event for current tab as well
     window.dispatchEvent(new Event('storage'));
   };
 
@@ -180,9 +200,7 @@ const App: React.FC = () => {
 
   const handleOrderNowFromList = (medicineName: string) => {
     setPrefilledMedicine(medicineName);
-    setIsPriceListView(false);
-    setIsOrderView(true);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    navigateTo(setIsOrderView);
   };
 
   const handleFormSubmit = async (profile: PatientProfile, medicalCase: MedicalCase) => {
@@ -193,6 +211,9 @@ const App: React.FC = () => {
       const result = await generatePrescription(profile, medicalCase);
       setActivePrescription(result);
       
+      // Push state so back button returns to form
+      window.history.pushState({ view: 'prescription' }, '');
+
       const newEntry: PrescriptionEntry = {
         id: Math.random().toString(36).substr(2, 9),
         patientId: profile.id,
@@ -204,12 +225,7 @@ const App: React.FC = () => {
       setPrescriptionHistory(newHistory);
       localStorage.setItem('mediConsult_history', JSON.stringify(newHistory));
 
-      setIsProfileView(false);
-      setIsSearchView(false);
-      setIsOrderView(false);
-      setIsPriceListView(false);
-      setIsHistoryView(false);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      resetNavigation();
     } catch (err) {
       setError("Failed to generate prescription. Please try again later.");
       console.error(err);
@@ -229,12 +245,7 @@ const App: React.FC = () => {
   const resetCase = () => {
     setActivePrescription(null);
     setError(null);
-    setIsProfileView(false);
-    setIsSearchView(false);
-    setIsOrderView(false);
-    setIsPriceListView(false);
-    setIsHistoryView(false);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    resetNavigation();
   };
 
   const currentTheme = THEMES.find(t => t.id === settings.activeThemeId) || THEMES[0];
@@ -258,15 +269,15 @@ const App: React.FC = () => {
   return (
     <Layout 
       isAdmin={isAdmin} 
-      setAdmin={setIsAdmin} 
+      setAdmin={() => navigateTo(setIsAdmin)} 
       isProfileView={isProfileView} 
-      setProfileView={setIsProfileView} 
+      setProfileView={() => navigateTo(setIsProfileView)} 
       isSearchView={isSearchView}
-      setSearchView={setIsSearchView}
+      setSearchView={() => navigateTo(setIsSearchView)}
       isOrderView={isOrderView}
-      setOrderView={setIsOrderView}
+      setOrderView={() => navigateTo(setIsOrderView)}
       isPriceListView={isPriceListView}
-      setPriceListView={setIsPriceListView}
+      setPriceListView={() => navigateTo(setIsPriceListView)}
       theme={currentTheme}
       profile={activeProfile}
       unreadCount={unreadCount > 0 ? unreadCount : 0}
@@ -304,9 +315,13 @@ const App: React.FC = () => {
       ) : isHistoryView ? (
         <PrescriptionHistory 
           entries={userHistory} 
-          onView={(entry) => { setActivePrescription(entry.prescription); setIsHistoryView(false); }} 
+          onView={(entry) => { 
+            setActivePrescription(entry.prescription); 
+            setIsHistoryView(false); 
+            window.history.pushState({ view: 'prescription' }, '');
+          }} 
           onRemove={handleRemoveHistory}
-          onClose={() => setIsHistoryView(false)}
+          onClose={() => { resetNavigation(); window.history.back(); }}
         />
       ) : (
         <div className="space-y-4 max-w-4xl mx-auto">
@@ -314,11 +329,11 @@ const App: React.FC = () => {
             <>
               {activeProfile && <WelcomeBanner profile={activeProfile} settings={settings} />}
               <HomeDashboard 
-                onOpenPriceList={() => setIsPriceListView(true)}
-                onOpenOrder={() => setIsOrderView(true)}
-                onOpenSearch={() => setIsSearchView(true)}
-                onOpenAdmin={() => setIsAdmin(true)}
-                onOpenHistory={() => setIsHistoryView(true)}
+                onOpenPriceList={() => navigateTo(setIsPriceListView)}
+                onOpenOrder={() => navigateTo(setIsOrderView)}
+                onOpenSearch={() => navigateTo(setIsSearchView)}
+                onOpenAdmin={() => navigateTo(setIsAdmin)}
+                onOpenHistory={() => navigateTo(setIsHistoryView)}
                 unreadCount={unreadCount > 0 ? unreadCount : 0}
               />
             </>
@@ -347,13 +362,12 @@ const App: React.FC = () => {
               <PrescriptionView 
                 profile={activeProfile} 
                 prescription={activePrescription} 
-                onReset={resetCase}
+                onReset={() => { resetCase(); window.history.back(); }}
                 settings={settings}
               />
             )
           )}
 
-          {/* Home Footer Text Section */}
           {isHomeView && settings.homeFooterText && (
             <div className="mt-12 p-8 text-center glass-card rounded-[2.5rem] border border-white/50 animate-in fade-in duration-1000">
                <p className="text-sm font-bold text-slate-500 italic leading-relaxed">

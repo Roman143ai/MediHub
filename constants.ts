@@ -21,6 +21,7 @@ export const INITIAL_SETTINGS: AppSettings = {
   homeWelcomeTitle: 'স্বাগতম!',
   homeWelcomeSubtitle: 'আপনার সুস্বাস্থ্য আমাদের একমাত্র লক্ষ্য।',
   homeFooterText: 'সুস্থ থাকুন, সঠিক চিকিৎসায় বিশ্বাস রাখুন।',
+  websiteUrl: 'www.mediconsult.ai',
   doctorDetails: {
     name: 'ডাঃ রিমন মাহমুদ',
     degree: 'MBBS, BCS (Health)',

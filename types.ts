@@ -43,6 +43,7 @@ export interface AppSettings {
   homeFooterText: string;
   doctorDetails: DoctorDetails;
   signatureImage?: string;
+  websiteUrl: string;
 }
 
 export interface PatientProfile {

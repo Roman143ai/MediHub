@@ -43,6 +43,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   const [homeWelcomeTitle, setHomeWelcomeTitle] = useState(settings.homeWelcomeTitle || 'স্বাগতম!');
   const [homeWelcomeSubtitle, setHomeWelcomeSubtitle] = useState(settings.homeWelcomeSubtitle || 'আপনার সুস্বাস্থ্য আমাদের লক্ষ্য।');
   const [homeFooterText, setHomeFooterText] = useState(settings.homeFooterText || '');
+  const [websiteUrl, setWebsiteUrl] = useState(settings.websiteUrl || 'www.mediconsult.ai');
 
   // Doctor Details Local State
   const [docName, setDocName] = useState(settings.doctorDetails.name);
@@ -95,6 +96,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   const handleSaveDoctorDetails = () => {
     onUpdate({ 
       ...settings, 
+      prescriptionTitle, // also allow saving title here as requested
+      websiteUrl,
       doctorDetails: {
         name: docName,
         degree: docDegree,
@@ -103,7 +106,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
         workplace: docWorkplace
       }
     });
-    alert("ডাক্তারের তথ্য আপডেট হয়েছে।");
+    alert("ডাক্তার ও ফুটার তথ্য আপডেট হয়েছে।");
   };
 
   const handleSaveUser = () => {
@@ -188,7 +191,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
         { id: 'symptoms', label: 'লক্ষণ', icon: '🤒' },
         { id: 'history', label: 'ইতিহাস', icon: '📜' },
         { id: 'tests', label: 'টেস্ট', icon: '🧪' },
-        { id: 'doctor', label: 'ডাক্তার', icon: '👨‍⚕️' },
+        { id: 'doctor', label: 'ডাক্তার ও ফুটার', icon: '👨‍⚕️' },
       ]
     },
     {
@@ -261,7 +264,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
         
         <header className="mb-8 flex justify-between items-center">
            <div>
-              <h1 className="text-2xl font-black text-slate-900 capitalize">{activeTab} Management</h1>
+              <h1 className="text-2xl font-black text-slate-900 capitalize">{activeTab === 'doctor' ? 'Doctor & Footer' : activeTab} Management</h1>
               <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Manage and configure your application</p>
            </div>
            <div className="bg-slate-50 px-4 py-2 rounded-xl border border-slate-100 text-[10px] font-black text-slate-500">
@@ -462,8 +465,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
           <div className="max-w-2xl mx-auto space-y-8 animate-in fade-in duration-300">
             <div className="bg-slate-50 p-10 rounded-[3rem] border border-slate-100 space-y-8 shadow-sm">
               <div className="text-center">
-                <h3 className="text-xl font-black text-slate-800">ডাক্তারের প্রোফাইল সেটআপ</h3>
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Prescription Doctor Information</p>
+                <h3 className="text-xl font-black text-slate-800">ডাক্তার ও ফুটার সেটআপ</h3>
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Prescription Doctor & Footer Information</p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -488,6 +491,21 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                     <input value={docWorkplace} onChange={e => setDocWorkplace(e.target.value)} className="w-full px-5 py-4 rounded-2xl bg-white border border-slate-200 text-xs font-bold shadow-sm" placeholder="ঢাকা মেডিকেল কলেজ হাসপাতাল" />
                   </div>
               </div>
+
+              {/* Added Footer Branding Section */}
+              <div className="pt-6 border-t border-slate-200 space-y-6">
+                <h4 className="text-[11px] font-black uppercase text-blue-600 tracking-widest text-center">ফুটার ব্র্যান্ডিং সেটিংস</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-4">ফুটার টাইটেল</label>
+                    <input value={prescriptionTitle} onChange={e => setPrescriptionTitle(e.target.value)} className="w-full px-5 py-4 rounded-2xl bg-white border border-slate-200 text-xs font-bold shadow-sm" placeholder="উদা: MediConsult AI" />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-4">ওয়েবসাইট ইউআরএল</label>
+                    <input value={websiteUrl} onChange={e => setWebsiteUrl(e.target.value)} className="w-full px-5 py-4 rounded-2xl bg-white border border-slate-200 text-xs font-bold shadow-sm" placeholder="উদা: www.mediconsult.ai" />
+                  </div>
+                </div>
+              </div>
               
               <div className="pt-4 border-t border-slate-200">
                 <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-4 block mb-3">ডিজিটাল স্বাক্ষর (Signature)</label>
@@ -504,7 +522,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                 </div>
               </div>
 
-              <button onClick={handleSaveDoctorDetails} className="w-full py-5 bg-blue-600 text-white rounded-[2rem] font-black text-xs uppercase shadow-xl hover:scale-[1.01] active:scale-95 transition-all">প্রোফাইল আপডেট করুন</button>
+              <button onClick={handleSaveDoctorDetails} className="w-full py-5 bg-blue-600 text-white rounded-[2rem] font-black text-xs uppercase shadow-xl hover:scale-[1.01] active:scale-95 transition-all">তথ্য আপডেট করুন</button>
             </div>
           </div>
         )}

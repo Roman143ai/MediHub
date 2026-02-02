@@ -44,26 +44,35 @@ export const PrescriptionView: React.FC<PrescriptionViewProps> = ({ profile, pre
 
     setIsDownloading(true);
 
-    const options = {
+    const opt = {
       margin: 0,
       filename: `Prescription_${profile.name.replace(/\s+/g, '_')}.pdf`,
-      image: { type: 'jpeg', quality: 1.0 },
+      image: { type: 'jpeg', quality: 0.98 },
       html2canvas: { 
-        scale: 2, 
+        scale: 3,
         useCORS: true, 
         logging: false,
         letterRendering: true,
-        width: 794 
+        backgroundColor: '#ffffff',
+        scrollY: -window.scrollY
       },
       jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
     };
 
     try {
-      const originalStyle = element.getAttribute('style') || '';
+      const originalWidth = element.style.width;
+      const originalMinHeight = element.style.minHeight;
+      const originalShadow = element.style.boxShadow;
+      
       element.style.width = '794px';
       element.style.minHeight = '1123px';
-      await (window as any).html2pdf().from(element).set(options).save();
-      element.setAttribute('style', originalStyle);
+      element.style.boxShadow = 'none';
+
+      await (window as any).html2pdf().from(element).set(opt).save();
+
+      element.style.width = originalWidth;
+      element.style.minHeight = originalMinHeight;
+      element.style.boxShadow = originalShadow;
     } catch (error) {
       console.error('PDF Generation Error:', error);
       alert('PDF ডাউনলোড করতে সমস্যা হয়েছে। আবার চেষ্টা করুন।');
@@ -78,7 +87,7 @@ export const PrescriptionView: React.FC<PrescriptionViewProps> = ({ profile, pre
       <div 
         className="bg-white shadow-xl overflow-hidden border border-slate-200 print:shadow-none print:border-none mx-auto" 
         ref={printRef} 
-        style={{ width: '100%', maxWidth: '800px', minHeight: '1123px', display: 'flex', flexDirection: 'column' }}
+        style={{ width: '100%', maxWidth: '800px', minHeight: '1123px', display: 'flex', flexDirection: 'column', backgroundColor: 'white' }}
       >
         
         {/* Prescription Header */}
@@ -114,7 +123,7 @@ export const PrescriptionView: React.FC<PrescriptionViewProps> = ({ profile, pre
         </div>
 
         {/* Main Content Area */}
-        <div className="flex flex-1 divide-x divide-slate-100">
+        <div className="flex flex-1 divide-x divide-slate-100 bg-white">
           {/* Left Column */}
           <div className="w-1/3 p-8 space-y-8 bg-slate-50/20">
             <section>
@@ -139,10 +148,10 @@ export const PrescriptionView: React.FC<PrescriptionViewProps> = ({ profile, pre
           </div>
 
           {/* Right Column (Medicines) */}
-          <div className="w-2/3 p-8">
+          <div className="w-2/3 p-8 bg-white">
             <div className="flex items-center gap-4 mb-8">
               <span className="text-5xl font-serif font-black italic select-none" style={{ color: currentTheme.primary }}>Rx.</span>
-              <div className="h-[2px] flex-1" style={{ background: `linear-gradient(to r, ${currentTheme.primary}20, transparent)` }}></div>
+              <div className="h-[2px] flex-1" style={{ background: `linear-gradient(to right, ${currentTheme.primary}20, transparent)` }}></div>
             </div>
 
             <div className="space-y-6">
@@ -171,7 +180,7 @@ export const PrescriptionView: React.FC<PrescriptionViewProps> = ({ profile, pre
               <div className="text-center w-48 space-y-2">
                 {settings.signatureImage ? (
                   <div className="h-16 flex items-center justify-center overflow-hidden">
-                    <img src={settings.signatureImage} className="h-full object-contain" alt="Signature" />
+                    <img src={settings.signatureImage} className="h-full object-contain" alt="Signature" crossOrigin="anonymous" />
                   </div>
                 ) : (
                   <div className="h-16"></div>
@@ -186,19 +195,20 @@ export const PrescriptionView: React.FC<PrescriptionViewProps> = ({ profile, pre
 
         {/* Prescription Footer */}
         {settings.banners.prescriptionFooter ? (
-          <div className="w-full">
+          <div className="w-full mt-auto">
             <img src={settings.banners.prescriptionFooter} className="w-full object-cover" alt="Footer" />
           </div>
         ) : (
-          <div className="px-8 py-6 bg-slate-50 border-t border-slate-100 flex justify-between items-center">
+          <div className="px-8 py-6 bg-slate-50 border-t border-slate-100 flex justify-between items-center mt-auto">
             <div className="max-w-[70%]">
               <p className="text-[9px] text-slate-400 font-bold leading-relaxed">
                 সতর্কবার্তা: এটি একটি এআই চালিত মূল্যায়ন। যেকোনো ঔষধ সেবনের পূর্বে ডাক্তারের পরামর্শ নিন।
               </p>
             </div>
             <div className="text-right">
+              {/* Updated dynamic labels */}
               <p className="text-[10px] font-black text-slate-800 uppercase tracking-tighter">{settings.prescriptionTitle}</p>
-              <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">www.mediconsult.ai</p>
+              <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">{settings.websiteUrl}</p>
             </div>
           </div>
         )}
@@ -215,7 +225,12 @@ export const PrescriptionView: React.FC<PrescriptionViewProps> = ({ profile, pre
           disabled={isDownloading}
           className={`flex-1 px-6 py-4 rounded-2xl font-black transition-all flex items-center justify-center gap-2 shadow-xl ${isDownloading ? 'bg-slate-100 text-slate-400' : 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-emerald-200'}`}
         >
-          {isDownloading ? 'ডাউনলোড হচ্ছে...' : 'PDF ডাউনলোড (A4)'}
+          {isDownloading ? (
+            <div className="flex items-center gap-2">
+              <svg className="animate-spin h-5 w-5 text-emerald-400" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+              তৈরি হচ্ছে...
+            </div>
+          ) : 'PDF ডাউনলোড (A4)'}
         </button>
 
         <button onClick={handlePrint} className="flex-1 px-6 py-4 text-white rounded-2xl font-black shadow-xl hover:opacity-90 transition-all" style={{ backgroundColor: currentTheme.primary }}>
