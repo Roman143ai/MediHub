@@ -22,6 +22,14 @@ export interface AppBanners {
   prescriptionFooter?: string;
 }
 
+export interface DoctorDetails {
+  name: string;
+  degree: string;
+  designation: string;
+  specialty: string;
+  workplace: string;
+}
+
 export interface AppSettings {
   symptoms: string[];
   medicalHistories: string[];
@@ -30,8 +38,11 @@ export interface AppSettings {
   banners: AppBanners;
   prescriptionTitle: string;
   prescriptionSubtitle: string;
-  homeWelcomeTitle: string; // New field
-  homeWelcomeSubtitle: string; // New field
+  homeWelcomeTitle: string;
+  homeWelcomeSubtitle: string;
+  homeFooterText: string;
+  doctorDetails: DoctorDetails;
+  signatureImage?: string;
 }
 
 export interface PatientProfile {

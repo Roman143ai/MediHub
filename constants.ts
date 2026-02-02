@@ -20,6 +20,14 @@ export const INITIAL_SETTINGS: AppSettings = {
   prescriptionSubtitle: 'Digital Health Assistant • Bangladesh',
   homeWelcomeTitle: 'স্বাগতম!',
   homeWelcomeSubtitle: 'আপনার সুস্বাস্থ্য আমাদের একমাত্র লক্ষ্য।',
+  homeFooterText: 'সুস্থ থাকুন, সঠিক চিকিৎসায় বিশ্বাস রাখুন।',
+  doctorDetails: {
+    name: 'ডাঃ রিমন মাহমুদ',
+    degree: 'MBBS, BCS (Health)',
+    designation: 'মেডিকেল অফিসার',
+    specialty: 'জেনারেল ফিজিশিয়ান',
+    workplace: 'ঢাকা মেডিকেল কলেজ হাসপাতাল'
+  },
   symptoms: [
     "জ্বর (Fever)", "কাশি (Cough)", "মাথাব্যথা (Headache)", "পেটে ব্যথা (Stomach Pain)",
     "শ্বাসকষ্ট (Shortness of Breath)", "দূর্বলতা (Weakness)", "বমি বমি ভাব (Nausea)",

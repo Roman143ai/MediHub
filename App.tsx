@@ -352,6 +352,15 @@ const App: React.FC = () => {
               />
             )
           )}
+
+          {/* Home Footer Text Section */}
+          {isHomeView && settings.homeFooterText && (
+            <div className="mt-12 p-8 text-center glass-card rounded-[2.5rem] border border-white/50 animate-in fade-in duration-1000">
+               <p className="text-sm font-bold text-slate-500 italic leading-relaxed">
+                 {settings.homeFooterText}
+               </p>
+            </div>
+          )}
         </div>
       )}
 

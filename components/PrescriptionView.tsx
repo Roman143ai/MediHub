@@ -1,6 +1,7 @@
 
 import React, { useRef, useState } from 'react';
-import { PatientProfile, Prescription, AppSettings } from '../types';
+import { PatientProfile, Prescription, AppSettings, Theme } from '../types';
+import { THEMES } from '../constants';
 
 interface PrescriptionViewProps {
   profile: PatientProfile;
@@ -12,6 +13,7 @@ interface PrescriptionViewProps {
 export const PrescriptionView: React.FC<PrescriptionViewProps> = ({ profile, prescription, onReset, settings }) => {
   const printRef = useRef<HTMLDivElement>(null);
   const [isDownloading, setIsDownloading] = useState(false);
+  const currentTheme = THEMES.find(t => t.id === settings.activeThemeId) || THEMES[0];
 
   const handlePrint = () => {
     const printContent = printRef.current;
@@ -42,7 +44,6 @@ export const PrescriptionView: React.FC<PrescriptionViewProps> = ({ profile, pre
 
     setIsDownloading(true);
 
-    // Precise A4 sizing (794px width is approx 210mm at 96dpi)
     const options = {
       margin: 0,
       filename: `Prescription_${profile.name.replace(/\s+/g, '_')}.pdf`,
@@ -52,19 +53,16 @@ export const PrescriptionView: React.FC<PrescriptionViewProps> = ({ profile, pre
         useCORS: true, 
         logging: false,
         letterRendering: true,
-        width: 794 // Fixed width for A4 consistency
+        width: 794 
       },
       jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
     };
 
     try {
-      // Temporary style to ensure content fits A4 perfectly during capture
       const originalStyle = element.getAttribute('style') || '';
       element.style.width = '794px';
-      element.style.minHeight = '1123px'; // A4 height ratio
-      
+      element.style.minHeight = '1123px';
       await (window as any).html2pdf().from(element).set(options).save();
-      
       element.setAttribute('style', originalStyle);
     } catch (error) {
       console.error('PDF Generation Error:', error);
@@ -89,14 +87,20 @@ export const PrescriptionView: React.FC<PrescriptionViewProps> = ({ profile, pre
             <img src={settings.banners.prescriptionHeader} className="w-full object-cover" alt="Header" />
           </div>
         ) : (
-          <div className="px-8 py-8 bg-white border-b-4 border-blue-600 flex justify-between items-center">
+          <div className="px-8 py-8 bg-white border-b-4 flex justify-between items-start" style={{ borderBottomColor: currentTheme.primary }}>
             <div>
-              <h1 className="text-4xl font-black text-blue-600 tracking-tighter">{settings.prescriptionTitle}</h1>
+              <h1 className="text-4xl font-black tracking-tighter" style={{ color: currentTheme.primary }}>{settings.prescriptionTitle}</h1>
               <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-1">{settings.prescriptionSubtitle}</p>
+              <div className="mt-4 pt-4 border-t border-slate-50">
+                <p className="text-sm font-bold text-slate-700">তারিখ: {new Date().toLocaleDateString('bn-BD')}</p>
+              </div>
             </div>
+            
             <div className="text-right">
-              <p className="text-sm font-bold text-slate-700">তারিখ: {new Date().toLocaleDateString('bn-BD')}</p>
-              <p className="text-[10px] font-black text-blue-500 uppercase mt-1">Ref: {Math.random().toString(36).substr(2, 6).toUpperCase()}</p>
+              <h2 className="text-lg font-black text-slate-800">{settings.doctorDetails.name}</h2>
+              <p className="text-[10px] font-black text-slate-500 uppercase">{settings.doctorDetails.degree}</p>
+              <p className="text-[10px] font-bold text-blue-600 uppercase mt-0.5">{settings.doctorDetails.designation}</p>
+              <p className="text-[9px] font-bold text-slate-400 mt-1">{settings.doctorDetails.workplace}</p>
             </div>
           </div>
         )}
@@ -114,11 +118,11 @@ export const PrescriptionView: React.FC<PrescriptionViewProps> = ({ profile, pre
           {/* Left Column */}
           <div className="w-1/3 p-8 space-y-8 bg-slate-50/20">
             <section>
-              <h3 className="text-[10px] font-black text-blue-600 uppercase mb-3 flex items-center gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
+              <h3 className="text-[10px] font-black uppercase mb-3 flex items-center gap-2" style={{ color: currentTheme.primary }}>
+                <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: currentTheme.primary }}></span>
                 রোগ নির্ণয় (Diagnosis)
               </h3>
-              <div className="text-[13px] font-bold text-slate-800 leading-snug bg-blue-50/50 p-4 rounded-xl border border-blue-100/50">
+              <div className="text-[13px] font-bold text-slate-800 leading-snug p-4 rounded-xl border" style={{ backgroundColor: currentTheme.primary + '10', borderColor: currentTheme.primary + '20' }}>
                 {prescription.diagnosis}
               </div>
             </section>
@@ -137,8 +141,8 @@ export const PrescriptionView: React.FC<PrescriptionViewProps> = ({ profile, pre
           {/* Right Column (Medicines) */}
           <div className="w-2/3 p-8">
             <div className="flex items-center gap-4 mb-8">
-              <span className="text-5xl font-serif font-black text-blue-600 italic select-none">Rx.</span>
-              <div className="h-[2px] flex-1 bg-gradient-to-r from-blue-100 to-transparent"></div>
+              <span className="text-5xl font-serif font-black italic select-none" style={{ color: currentTheme.primary }}>Rx.</span>
+              <div className="h-[2px] flex-1" style={{ background: `linear-gradient(to r, ${currentTheme.primary}20, transparent)` }}></div>
             </div>
 
             <div className="space-y-6">
@@ -148,10 +152,10 @@ export const PrescriptionView: React.FC<PrescriptionViewProps> = ({ profile, pre
                   <div className="flex items-center gap-2 mt-1">
                     <p className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">Generic: {med.genericName}</p>
                     <span className="w-1 h-1 bg-slate-200 rounded-full"></span>
-                    <p className="text-[10px] font-black text-blue-500 italic">{med.purpose}</p>
+                    <p className="text-[10px] font-black italic" style={{ color: currentTheme.primary }}>{med.purpose}</p>
                   </div>
                   <div className="flex gap-4 items-center mt-3">
-                    <div className="text-[12px] font-black text-blue-700 bg-blue-50 px-4 py-1.5 rounded-lg border border-blue-100 shadow-sm">
+                    <div className="text-[12px] font-black px-4 py-1.5 rounded-lg border shadow-sm" style={{ color: currentTheme.primary, backgroundColor: currentTheme.primary + '10', borderColor: currentTheme.primary + '20' }}>
                       {med.dosage}
                     </div>
                     <div className="text-[11px] font-bold text-slate-500 flex items-center gap-1">
@@ -160,6 +164,22 @@ export const PrescriptionView: React.FC<PrescriptionViewProps> = ({ profile, pre
                   </div>
                 </div>
               ))}
+            </div>
+
+            {/* Signature Block */}
+            <div className="mt-16 flex justify-end">
+              <div className="text-center w-48 space-y-2">
+                {settings.signatureImage ? (
+                  <div className="h-16 flex items-center justify-center overflow-hidden">
+                    <img src={settings.signatureImage} className="h-full object-contain" alt="Signature" />
+                  </div>
+                ) : (
+                  <div className="h-16"></div>
+                )}
+                <div className="h-[1px] w-full bg-slate-300"></div>
+                <p className="text-[9px] font-black text-slate-800 uppercase tracking-widest">Authorized Signature</p>
+                <p className="text-[8px] font-bold text-slate-400 uppercase">{settings.doctorDetails.name}</p>
+              </div>
             </div>
           </div>
         </div>
@@ -198,7 +218,7 @@ export const PrescriptionView: React.FC<PrescriptionViewProps> = ({ profile, pre
           {isDownloading ? 'ডাউনলোড হচ্ছে...' : 'PDF ডাউনলোড (A4)'}
         </button>
 
-        <button onClick={handlePrint} className="flex-1 px-6 py-4 bg-blue-600 text-white rounded-2xl font-black shadow-xl hover:bg-blue-700 shadow-blue-200 transition-all">
+        <button onClick={handlePrint} className="flex-1 px-6 py-4 text-white rounded-2xl font-black shadow-xl hover:opacity-90 transition-all" style={{ backgroundColor: currentTheme.primary }}>
           প্রিন্ট করুন
         </button>
       </div>
